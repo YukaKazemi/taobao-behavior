@@ -225,7 +225,7 @@ class Data_Analysis:
     def rfm_analysis(self):
         print('开始分析', '*' * 20)
         # 选取10万数据
-        taobao_data_sub1 = self.taobao_data.iloc[:100000, :]
+        taobao_data_sub1 = self.taobao_data.iloc[:10000, :]
         # 不日期访问量
         max_date = taobao_data_sub1['登陆时间'].max()
         behavior_type_user_num = taobao_data_sub1.groupby('用户行为')['用户ID']
@@ -262,7 +262,7 @@ class Data_Analysis:
         buy_num_count = user_behaviour_frame_con.groupby('用户ID')['用户行为'].count()
         # 转换为列表
         buy_num_count_list = list(buy_num_count)
-
+        print('data_list', date_list)
         # 求取R、F的最大、最小、三等分距
         # 求R的最大值
         max_r = max(date_list)
@@ -270,13 +270,14 @@ class Data_Analysis:
         min_r = min(date_list)
         # 求 R的极值三等分距
         trisection_distance_r = (max_r - min_r) / 3
+        print('trisection_distance_r', trisection_distance_r)
         # 求F的最大值
         max_f = max(buy_num_count_list)
         # 求F的最小值
         min_f = min(buy_num_count_list)
         # 求F的三等分距
         trisection_distance_f = (max_f - min_f) / 3
-
+        print('trisection_distance_f', trisection_distance_f)
         # 计算R-score、F-score
         import math
         # 计算R-score
@@ -296,6 +297,8 @@ class Data_Analysis:
 
         # 计算 RF-score=100*R-score+10*F-score+1*M-score
         # 由于本数据集不涉及到消费金额，所以暂时不考虑M-score
+        print(len(score_f_list))
+        print(score_r_list)
         rf_score_list = []
         for index in range(len(score_r_list)):
             rf_score_list.append(100 * score_r_list[index] + 10 * score_f_list[index])
