@@ -4,9 +4,11 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
+
 import seaborn as sns
 import matplotlib as mpt
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 mpt.use('TkAgg')
 plt.rcParams['font.sans-serif'] = ['SimHei']  # 用来正常显示中文标签
@@ -51,7 +53,7 @@ if __name__ == '__main__':
     taobao_data['登陆时间'] = pd.to_datetime(taobao_data['登陆时间'])
     # 出于电脑性能原因，只选取前10W条数据进行分析
     data = taobao_data.iloc[:100000, :]
-
+    # data = taobao_data
     data_analysis = RFMAnalysis(data)
 
     max_date = data['登陆时间'].max()
@@ -95,11 +97,11 @@ if __name__ == '__main__':
     rfm = pd.DataFrame()
     rfm['R-score'] = data_analysis.build_R(max_r, min_r, trisection_distance_r, date_list)
     rfm['F-score'] = data_analysis.build_F(max_f, min_f, trisection_distance_f, buy_num_count_list)
-    print(rfm)
+    # print(rfm)
     # 数据标准化
     scaler = StandardScaler()
     rfm_scaled = scaler.fit_transform(rfm[['R-score', 'F-score']])
-    print(rfm_scaled)
+    # print(rfm_scaled)
     # 定义候选K值
     scope = range(1, 11, 1)
     #     定义SSE列表，用来存放不同K值下的SSE
@@ -123,12 +125,29 @@ if __name__ == '__main__':
     print('SSE:', kmeans.inertia_)
     # 获取迭代次数
     print('迭代次数:', kmeans.n_iter_)
+    # 获取样本簇标签
+    labels = kmeans.labels_
+
+    # 绘制类别数量柱状图
+    sns.set(style="whitegrid")
+    plt.figure(figsize=(8, 6))
+    ax = sns.countplot(x=labels, palette="Set2")
+    ax.set_xlabel("Cluster Labels")
+    ax.set_ylabel("Count")
+    ax.set_title("Cluster Label Counts")
+    for p in ax.patches:
+        ax.annotate(format(p.get_height(), '.0f'),
+                    (p.get_x() + p.get_width() / 2., p.get_height()),
+                    ha='center', va='center',
+                    xytext=(0, 9),
+                    textcoords='offset points')
+    plt.savefig('../tmp/不同群体柱状图对比.svg')
+
     # 将聚类标签添加到原始数据
     rfm['Cluster'] = kmeans.labels_
-
     # 绘制箱线图，
-    fig, ax = plt.subplots(3, 3)
-    fig.set_size_inches(18, 5)
+    fig, ax = plt.subplots(3, 2)
+    fig.set_size_inches(12, 5)
     for i in range(3):
         d = rfm[rfm['Cluster'] == i]
         sns.boxplot(y="R-score", data=d, ax=ax[i][0])
@@ -136,4 +155,18 @@ if __name__ == '__main__':
         # sns.boxplot(y="M-score", data=d, ax=ax[i][2])
     plt.tight_layout()
     plt.savefig('../tmp/不同群体箱形图对比.svg')
+
+    # # 绘制散点图
+    # plt.figure(figsize=(12, 8))
+    # color = ['r', 'g', 'b']
+    #
+    # for i in range(3):
+    #     d = rfm[rfm['Cluster'] == i]
+    #     plt.scatter(d['R-score'], d['F-score'], color=color[i], label=f"客户群{i}")
+    #
+    # plt.xlabel('R-score')
+    # plt.ylabel('F-score')
+    # plt.legend()
+    #
+    # plt.savefig('../tmp/不同群体分布图.svg')
     plt.show()
